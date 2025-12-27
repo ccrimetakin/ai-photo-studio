@@ -1,41 +1,45 @@
 import streamlit as st
 from rembg import remove
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageFilter
 import io
 
 st.set_page_config(page_title="AI Studio Pro", layout="wide")
 
-st.title("📸 Professional AI Photo Editor")
-st.write("Upload karein aur professional edits payein!")
+st.title("🚀 All-in-One AI Photo Studio")
 
-uploaded_file = st.file_uploader("Photo choose karein...", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"])
 
 if uploaded_file:
-    col1, col2 = st.columns(2)
     img = Image.open(uploaded_file)
     
-    with col1:
-        st.header("Original")
-        st.image(img, use_container_width=True)
+    # Sidebar for Tools like Photoroom
+    st.sidebar.header("Classics & Tools")
+    tool = st.sidebar.radio("Select Tool", 
+        ["Background Remover", "Blur Effect", "Black & White", "Marketplace Resize"])
 
-    # Tool Options
-    option = st.selectbox("Action select karein:", 
-                         ["Background Hatayein", "White Background (Marketplace)", "Blur Background"])
-
-    if st.button("Process Karein"):
-        with st.spinner("AI kaam kar raha hai..."):
-            if option == "Background Hatayein":
-                result = remove(img)
-            elif option == "White Background (Marketplace)":
-                no_bg = remove(img)
-                result = Image.new("RGB", no_bg.size, (255, 255, 255))
-                result.paste(no_bg, mask=no_bg.split()[3])
+    if st.button("Apply Magic"):
+        with st.spinner("Processing..."):
+            if tool == "Background Remover":
+                output = remove(img)
+                st.image(output, caption="Transparent Background")
             
-            with col2:
-                st.header("Result")
-                st.image(result, use_container_width=True)
-                
-                # Download Button
-                buf = io.BytesIO()
-                result.save(buf, format="PNG")
-                st.download_button("Download Image", buf.getvalue(), "edited.png")
+            elif tool == "Blur Effect":
+                output = img.filter(ImageFilter.GaussianBlur(10))
+                st.image(output, caption="Blur Applied")
+
+            elif tool == "Black & White":
+                output = ImageOps.grayscale(img)
+                st.image(output, caption="B&W Classic")
+
+            elif tool == "Marketplace Resize":
+                # Resizing for Shopify/Amazon (Square)
+                output = ImageOps.pad(img, (1080, 1080), color="white")
+                st.image(output, caption="1080x1080 Square Template")
+
+            # Download Option
+            buf = io.BytesIO()
+            if tool == "Background Remover":
+                output.save(buf, format="PNG")
+            else:
+                output.save(buf, format="JPEG")
+            st.download_button("Download Result", buf.getvalue(), "edited_image.png")
